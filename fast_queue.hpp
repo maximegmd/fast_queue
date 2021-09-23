@@ -2,8 +2,17 @@
 
 #include <new>
 
+#ifdef __cpp_lib_hardware_interference_size
+    using std::hardware_constructive_interference_size;
+    using std::hardware_destructive_interference_size;
+#else
+    // 64 bytes on x86-64 │ L1_CACHE_BYTES │ L1_CACHE_SHIFT │ __cacheline_aligned │ ...
+    constexpr std::size_t hardware_constructive_interference_size = 64;
+    constexpr std::size_t hardware_destructive_interference_size = 64;
+#endif
+
 template<class T, size_t Exponent = 18>
-struct alignas(std::hardware_destructive_interference_size) fast_queue
+struct alignas(hardware_destructive_interference_size) fast_queue
 {
     struct read_lock
     {
@@ -71,14 +80,14 @@ private:
         return i >> Exponent;
     }
 
-    struct alignas(std::hardware_destructive_interference_size) entry
+    struct alignas(hardware_destructive_interference_size) entry
     {
         std::atomic<size_t> state{ 0 };
         T data;
     };
 
-    alignas(std::hardware_destructive_interference_size) std::atomic<size_t> m_last{ 0 };
-    alignas(std::hardware_destructive_interference_size) std::atomic<size_t> m_first{ 0 };
+    alignas(hardware_destructive_interference_size) std::atomic<size_t> m_last{ 0 };
+    alignas(hardware_destructive_interference_size) std::atomic<size_t> m_first{ 0 };
     entry m_buffer[kSize];
 };
 
